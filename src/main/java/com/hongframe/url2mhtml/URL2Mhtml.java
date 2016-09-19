@@ -1,15 +1,6 @@
 package com.hongframe.url2mhtml;
 
-import com.hongframe.entity.Image;
 import org.apache.commons.lang3.StringUtils;
-import org.htmlparser.Parser;
-import org.htmlparser.Tag;
-import org.htmlparser.filters.TagNameFilter;
-import org.htmlparser.lexer.Lexer;
-import org.htmlparser.lexer.Page;
-import org.htmlparser.util.DefaultParserFeedback;
-import org.htmlparser.util.NodeList;
-import org.htmlparser.util.ParserException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -121,13 +112,6 @@ public class URL2Mhtml {
             return false;
         }
         HashMap urlMap = new HashMap();
-        NodeList nodes = new NodeList();
-        try {
-            Parser parser = createParser(html);
-            nodes = parser.parse(null);
-        } catch (ParserException e) {
-            e.printStackTrace();
-        }
 
         Document doc = Jsoup.parse(html);
         Elements scriptElements = doc.select("link[href]");
@@ -135,13 +119,12 @@ public class URL2Mhtml {
         Elements imgElements = doc.select("img[src]");
 
         URL strWebB = extractBaseURL(doc.select("base[href]"));
-        if(strWebB == null || strWebB.equals("")){
+        if(strWebB == null || strWebB.equals("")) {
             strWebB = url;
         }
         List urlScriptList = extractAllScriptElements(urlMap, strWebB, scriptElements);
-
-        List urlImageList = extractAllImageElements(nodes, urlMap, strWebB, imgElements);
-        if(strWebB == null || strWebB.equals("")){
+        List urlImageList = extractAllImageElements(urlMap, strWebB, imgElements);
+        if(strWebB == null || strWebB.equals("")) {
             for (Iterator iter = urlMap.entrySet().iterator(); iter.hasNext();) {
                 Map.Entry entry = (Map.Entry) iter.next();
                 String key = (String) entry.getKey();
@@ -202,17 +185,6 @@ public class URL2Mhtml {
     }
 
     /**
-     * 方法说明：建立HTML parser<br>
-     * 输入参数：inputHTML 网页文本内容<br>
-     * 返回类型：HTML parser<br>
-     */
-    private Parser createParser(String inputHTML) {
-        Lexer mLexer = new Lexer(new Page(inputHTML));
-        return new Parser(mLexer, new DefaultParserFeedback(
-                DefaultParserFeedback.QUIET));
-    }
-
-    /**
      * 方法说明：抽取基础URL地址<br>
      * 输入参数：nodes 网页标签集合<br>
      * 返回类型：URL<br>
@@ -266,8 +238,8 @@ public class URL2Mhtml {
      * 输入参数：nodes 网页标签集合; urlMap 已存在的url集合; strWeb 网页地址<br>
      * 返回类型：图像链接集合<br>
      */
-    private List<List<String>> extractAllImageElements(NodeList nodes, HashMap urlMap,
-                                              URL url, Elements elements) {
+    private List<List<String>> extractAllImageElements(HashMap urlMap,
+                                                       URL url, Elements elements) {
 
         List<List<String>> urlList = new ArrayList();
         for(Element e : elements) {

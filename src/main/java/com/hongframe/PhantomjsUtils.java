@@ -14,11 +14,11 @@ public class PhantomjsUtils {
 
     static {
         String path = new File(URL2SingletonHtml.class.getResource("/").getPath()).getPath();
-        phantomjsPath = path + "\\classes" + System.getProperty("file.separator") + "phantom_load_web_page2.js ";
+        phantomjsPath = path +  System.getProperty("file.separator") + "classes" + System.getProperty("file.separator") + "phantom_load_web_page2.js ";
         File f = new File(phantomjsPath);
         if (!f.exists()) {
             path = StringUtils.substringBeforeLast(path, System.getProperty("file.separator"));
-            phantomjsPath = path + "\\classes" + System.getProperty("file.separator") + "phantom_load_web_page2.js ";
+            phantomjsPath = path +  System.getProperty("file.separator") + "classes" + System.getProperty("file.separator") + "phantom_load_web_page2.js ";
         }
     }
 

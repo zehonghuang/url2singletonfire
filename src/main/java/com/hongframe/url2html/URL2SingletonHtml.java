@@ -28,7 +28,7 @@ public class URL2SingletonHtml {
     private Map<String, String> map = new HashMap<String, String>();
 
     public static void main(String[] args) throws IOException {
-        new URL2SingletonHtml("https://www.lu.com/", "C:\\lu.html", "ppp.png");
+        new URL2SingletonHtml("http://www.5aitou.com","/Users/huangzehong/Downloads/5aitou.html", "/Users/huangzehong/Downloads/ihurong.png", "UTF-8");
     }
 
     /**
@@ -36,25 +36,31 @@ public class URL2SingletonHtml {
      * @param url 指定页面的url
      * @param htmlPath html文件的保存路径
      * @param imgPath 截图文件的保存路径
+     * @param encode
      * @throws IOException
      */
-    public URL2SingletonHtml(String url, String htmlPath, String imgPath) throws IOException {
+    public URL2SingletonHtml(String url, String htmlPath, String imgPath, String encode) throws IOException {
 
         try {
             byte[] bText = null;
             // 取得页面内容
             bText = PhantomjsUtils.toHTML(url, imgPath).getBytes();
-            String strText = new String(bText);
-            strEncoding = strText.split("charset=(\")")[1];
-            strEncoding = strEncoding.substring(0, strEncoding.indexOf("\""));
+            String html = new String(bText);
+            if(html.contains("charset=")) {
+                strEncoding = html.split("charset=(\")")[1];
+                strEncoding = strEncoding.substring(0, strEncoding.indexOf("\""));
+            }
+            else {
+                strEncoding = encode;
+            }
             try {
-                strText = new String(bText, 0, bText.length, strEncoding);
+                html = new String(bText, 0, bText.length, strEncoding);
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
             System.out.println("into compile");
-            compile(new URL(url), strText);
-            saveAsFileWriter(replaceHtml(strText, map), htmlPath);
+            compile(new URL(url), html);
+            saveAsFileWriter(replaceHtml(html, map), htmlPath);
         } catch (MalformedURLException e) {
             e.printStackTrace();
             return;

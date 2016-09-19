@@ -1,7 +1,6 @@
 package com.hongframe.url2mhtml;
 
 import com.hongframe.PhantomjsUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -40,7 +39,7 @@ public class URL2Mhtml {
 
 
     public static void main(String[] args) throws IOException {
-        new URL2Mhtml("http://www.5aitou.com","C:\\", "c:\\ihurong.png");
+        new URL2Mhtml("http://www.5aitou.com","/Users/huangzehong/Downloads/", "/Users/huangzehong/Downloads/ihurong.png", "UTF-8");
     }
 
     /**
@@ -48,16 +47,20 @@ public class URL2Mhtml {
      * 输入参数：url 网页地址;  strFilePath 保存路径<br>
      * @throws IOException
      */
-    public URL2Mhtml(String url, String htmlPath, String imgPath) throws IOException {
+    public URL2Mhtml(String url, String htmlPath, String imgPath, String encode) throws IOException {
 
         try {
             byte[] bText = null;
             //取得页面内容
             bText = PhantomjsUtils.toHTML(url, imgPath).getBytes();
             String html = new String(bText);
-            System.out.println(html);
-            strEncoding = html.split("charset=(\")")[1];
-            strEncoding = strEncoding.substring(0, strEncoding.indexOf("\""));
+            if(html.contains("charset=")) {
+                strEncoding = html.split("charset=(\")")[1];
+                strEncoding = strEncoding.substring(0, strEncoding.indexOf("\""));
+            }
+            else {
+                strEncoding = encode;
+            }
             try {
                 html = new String(bText, 0, bText.length, strEncoding);
             } catch (UnsupportedEncodingException e) {

@@ -1,5 +1,6 @@
 package com.hongframe.url2mhtml;
 
+import com.hongframe.PhantomjsUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -37,17 +38,6 @@ public class URL2Mhtml {
     private String cc;
     private String bcc;
 
-    private static String phantomjsPath = "";
-
-    static {
-        String path = new File(URL2Mhtml.class.getResource("/").getPath()).getPath();
-        phantomjsPath = path + "\\classes" + System.getProperty("file.separator") + "phantomjs_fetcher.js ";
-        File f = new File(phantomjsPath);
-        if (!f.exists()) {
-            path = StringUtils.substringBeforeLast(path, System.getProperty("file.separator"));
-            phantomjsPath = path + "\\classes" + System.getProperty("file.separator") + "phantom_load_web_page2.js ";
-        }
-    }
 
     public static void main(String[] args) throws IOException {
         new URL2Mhtml("http://www.5aitou.com","C:\\", "c:\\ihurong.png");
@@ -63,7 +53,7 @@ public class URL2Mhtml {
         try {
             byte[] bText = null;
             //取得页面内容
-            bText = toHtml(url, imgPath).getBytes();
+            bText = PhantomjsUtils.toHTML(url, imgPath).getBytes();
             String html = new String(bText);
             System.out.println(html);
             strEncoding = html.split("charset=(\")")[1];
@@ -82,24 +72,6 @@ public class URL2Mhtml {
             e.printStackTrace();
             return;
         }
-    }
-
-    public String toHtml(String url, String imgPath) throws IOException {
-
-        InputStream is = null;
-        BufferedReader br = null;
-        StringBuilder sb = new StringBuilder();
-        Runtime runtime = Runtime.getRuntime();
-
-        Process process = runtime.exec("phantomjs " + phantomjsPath + url + " " + imgPath);
-        is = process.getInputStream();
-        br = new BufferedReader(new InputStreamReader(is));
-
-        String line;
-        while ((line = br.readLine()) != null) {
-            sb.append(line).append("\n");
-        }
-        return sb.toString();
     }
 
     /**

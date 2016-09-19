@@ -1,5 +1,6 @@
 package com.hongframe.url2html;
 
+import com.hongframe.PhantomjsUtils;
 import com.hongframe.entity.Image;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
@@ -24,18 +25,7 @@ public class URL2SingletonHtml {
     /** 网页编码 */
     private String strEncoding = null;
 
-    private static String phantomjsPath = "";
     private Map<String, String> map = new HashMap<String, String>();
-
-    static {
-        String path = new File(URL2SingletonHtml.class.getResource("/").getPath()).getPath();
-        phantomjsPath = path + "\\classes" + System.getProperty("file.separator") + "phantomjs_fetcher.js ";
-        File f = new File(phantomjsPath);
-        if (!f.exists()) {
-            path = StringUtils.substringBeforeLast(path, System.getProperty("file.separator"));
-            phantomjsPath = path + "\\classes" + System.getProperty("file.separator") + "phantom_load_web_page2.js ";
-        }
-    }
 
     public static void main(String[] args) throws IOException {
         new URL2SingletonHtml("https://www.lu.com/", "C:\\lu.html", "ppp.png");
@@ -53,7 +43,7 @@ public class URL2SingletonHtml {
         try {
             byte[] bText = null;
             // 取得页面内容
-            bText = toHTML(url, imgPath).getBytes();
+            bText = PhantomjsUtils.toHTML(url, imgPath).getBytes();
             String strText = new String(bText);
             strEncoding = strText.split("charset=(\")")[1];
             strEncoding = strEncoding.substring(0, strEncoding.indexOf("\""));
@@ -69,25 +59,6 @@ public class URL2SingletonHtml {
             e.printStackTrace();
             return;
         }
-    }
-
-    private String toHTML(String url, String imgPath) throws IOException {
-
-        InputStream is = null;
-        BufferedReader br = null;
-        StringBuilder sb = new StringBuilder();
-        Runtime runtime = Runtime.getRuntime();
-
-        Process process = runtime.exec("phantomjs " + phantomjsPath + url + " " + imgPath);
-        is = process.getInputStream();
-        br = new BufferedReader(new InputStreamReader(is));
-
-        String line;
-        while ((line = br.readLine()) != null) {
-            sb.append(line).append("\n");
-        }
-        System.out.println("phantomjs end....");
-        return sb.toString();
     }
 
     /**

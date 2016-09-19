@@ -1,7 +1,6 @@
 //https://code.jquery.com/jquery-3.1.0.min.js
 var system = require('system');
 var webpage = require('webpage');
-var cprocess = require("child_process");
 var fs = require('fs');
 
 var url = system.args[1];

@@ -124,7 +124,7 @@ public class URL2SingletonHtml {
      * 输入参数：url 文件路径<br>
      * 返回类型：byte[]<br>
      */
-    public byte[] downBinaryFile(String urlStr) {
+    private byte[] downBinaryFile(String urlStr) {
         try {
             URL url = new URL(urlStr);
             URLConnection conn = url.openConnection();

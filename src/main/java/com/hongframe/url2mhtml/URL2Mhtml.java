@@ -1,5 +1,6 @@
 package com.hongframe.url2mhtml;
 
+import com.hongframe.entity.Image;
 import org.apache.commons.lang3.StringUtils;
 import org.htmlparser.Parser;
 import org.htmlparser.Tag;
@@ -9,6 +10,10 @@ import org.htmlparser.lexer.Page;
 import org.htmlparser.util.DefaultParserFeedback;
 import org.htmlparser.util.NodeList;
 import org.htmlparser.util.ParserException;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
@@ -59,28 +64,28 @@ public class URL2Mhtml {
 
     /**
      * 构造方法：初始化<br>
-     * 输入参数：strUrl 网页地址;  strFilePath 保存路径<br>
+     * 输入参数：url 网页地址;  strFilePath 保存路径<br>
      * @throws IOException
      */
-    public URL2Mhtml(String strUrl, String strFilePath, String imgPath) throws IOException {
+    public URL2Mhtml(String url, String htmlPath, String imgPath) throws IOException {
 
         try {
             byte[] bText = null;
             //取得页面内容
-            bText = toMhtml(strUrl, imgPath).getBytes();
-            String strText = new String(bText);
-            System.out.println(strText);
-            strEncoding = strText.split("charset=(\")")[1];
+            bText = toHtml(url, imgPath).getBytes();
+            String html = new String(bText);
+            System.out.println(html);
+            strEncoding = html.split("charset=(\")")[1];
             strEncoding = strEncoding.substring(0, strEncoding.indexOf("\""));
             try {
-                strText = new String(bText, 0, bText.length, strEncoding);
+                html = new String(bText, 0, bText.length, strEncoding);
             } catch (UnsupportedEncodingException e) {
                 e.printStackTrace();
             }
-            if (strText == null){
+            if (html == null){
                 return;
             }
-            compile(new URL(strUrl),strText,strFilePath);
+            compile(new URL(url),html,htmlPath);
 
         } catch (MalformedURLException e) {
             e.printStackTrace();
@@ -88,13 +93,12 @@ public class URL2Mhtml {
         }
     }
 
-    public static String toMhtml(String url, String imgPath) throws IOException {
+    public String toHtml(String url, String imgPath) throws IOException {
 
         InputStream is = null;
         BufferedReader br = null;
         StringBuilder sb = new StringBuilder();
         Runtime runtime = Runtime.getRuntime();
-
 
         Process process = runtime.exec("phantomjs " + phantomjsPath + url + " " + imgPath);
         is = process.getInputStream();
@@ -112,36 +116,42 @@ public class URL2Mhtml {
      * 输入参数：strWeb 网页地址; strText 网页内容; strFilePath 保存路径<br>
      * 返回类型：boolean<br>
      */
-    public boolean compile(URL strWeb, String strText, String strFilePath) {
-        if (strWeb == null || strText == null || strFilePath == null){
+    public boolean compile(URL url, String html, String htmlPath) {
+        if (url == null || html == null || htmlPath == null){
             return false;
         }
         HashMap urlMap = new HashMap();
         NodeList nodes = new NodeList();
         try {
-            Parser parser = createParser(strText);
+            Parser parser = createParser(html);
             nodes = parser.parse(null);
         } catch (ParserException e) {
             e.printStackTrace();
         }
 
-        URL strWebB = extractAllScriptNodes(nodes);
+        Document doc = Jsoup.parse(html);
+        Elements scriptElements = doc.select("link[href]");
+        scriptElements.addAll(doc.select("script[src]"));
+        Elements imgElements = doc.select("img[src]");
+
+        URL strWebB = extractBaseURL(doc.select("base[href]"));
         if(strWebB == null || strWebB.equals("")){
-            strWebB = strWeb;
+            strWebB = url;
         }
-        ArrayList urlScriptList = extractAllScriptNodes(nodes, urlMap, strWebB);
-        ArrayList urlImageList = extractAllImageNodes(nodes, urlMap, strWebB);
+        List urlScriptList = extractAllScriptElements(urlMap, strWebB, scriptElements);
+
+        List urlImageList = extractAllImageElements(nodes, urlMap, strWebB, imgElements);
         if(strWebB == null || strWebB.equals("")){
             for (Iterator iter = urlMap.entrySet().iterator(); iter.hasNext();) {
                 Map.Entry entry = (Map.Entry) iter.next();
                 String key = (String) entry.getKey();
                 String val = (String) entry.getValue();
-                strText = strText.replace(val, key);
+                html = html.replace(val, key);
             }
         }
 
         try {
-            createMhtArchive(strText, urlScriptList, urlImageList, strWeb, strFilePath);
+            createMhtArchive(html, urlScriptList, urlImageList, url, htmlPath);
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -207,14 +217,12 @@ public class URL2Mhtml {
      * 输入参数：nodes 网页标签集合<br>
      * 返回类型：URL<br>
      */
-    private URL extractAllScriptNodes(NodeList nodes) {
-
-        NodeList filtered = nodes.extractAllNodesThatMatch(new TagNameFilter(
-                "BASE"), true);
-
-        if (filtered != null && filtered.size() > 0) {
-            Tag tag = (Tag) filtered.elementAt(0);
-            String href = tag.getAttribute("href");
+    private URL extractBaseURL(Elements elements) {
+        if(elements == null)
+            return null;
+        String href = null;
+        for(Element element : elements) {
+            href = element.attr("href");
             if (href != null && href.length() > 0) {
                 try {
                     return new URL(href);
@@ -232,64 +240,25 @@ public class URL2Mhtml {
      * 输入参数：nodes 网页标签集合; urlMap 已存在的url集合<br>
      * 返回类型：css,js链接的集合<br>
      */
-    private ArrayList extractAllScriptNodes(NodeList nodes, HashMap urlMap,
-                                            URL strWeb) {
+    private List<List<String>> extractAllScriptElements(HashMap urlMap,
+                                                        URL url, Elements elements) {
 
-        ArrayList urlList = new ArrayList();
-        NodeList filtered = nodes.extractAllNodesThatMatch(new TagNameFilter(
-                "script"), true);
-        //遍历页面所有的script结点
-        for (int i = 0; i < filtered.size(); i++) {
-            Tag tag = (Tag) filtered.elementAt(i);
-            String src = tag.getAttribute("src");
-            System.out.println("script src="+src);
-            // Handle external css file's url
-            if (src != null && src.length() > 0) {
-                String innerURL = src;
-                //取得绝对路径,即把?号后面的除掉
-                String absoluteURL = makeAbsoluteURL(strWeb, innerURL);
-                System.out.println("script src="+absoluteURL);
-                if (absoluteURL != null && !urlMap.containsKey(absoluteURL)) {
-                    urlMap.put(absoluteURL, innerURL);
-                    ArrayList urlInfo = new ArrayList();
-                    urlInfo.add(innerURL);
-                    urlInfo.add(absoluteURL);
-                    urlList.add(urlInfo);
-                }
-                tag.setAttribute("src", absoluteURL);
+        List<List<String>> urlList = new ArrayList();
+        for(Element e : elements) {
+            String src0href = e.attr("src");
+            if("".equals(src0href)) {
+                src0href = e.attr("href");
+            }
+            String absoluteURL = makeAbsoluteURL(url, src0href);
+            if(absoluteURL != null && !urlMap.containsKey(absoluteURL)) {
+                urlMap.put(absoluteURL, src0href);
+                List<String> urlInfo = new ArrayList();
+                urlInfo.add(src0href);
+                urlInfo.add(absoluteURL);
+                urlList.add(urlInfo);
             }
         }
-
-        filtered = nodes.extractAllNodesThatMatch(new TagNameFilter("link"),true);
-        for (int i = 0; i < filtered.size(); i++) {
-            Tag tag = (Tag) filtered.elementAt(i);
-            String type = tag.getAttribute("type");
-            String rel = tag.getAttribute("rel");
-            String href = tag.getAttribute("href");
-            boolean isCssFile = false;
-            if (rel != null) {
-                isCssFile = rel.indexOf("stylesheet") != -1;
-            } else if (type != null) {
-                isCssFile |= type.indexOf("text/css") != -1;
-            }
-
-            if (isCssFile && href != null && href.length() > 0) {
-                String innerURL = href;
-                System.out.println("css link="+href);
-                String absoluteURL = makeAbsoluteURL(strWeb, innerURL);
-                if (absoluteURL != null && !urlMap.containsKey(absoluteURL)) {
-                    urlMap.put(absoluteURL, innerURL);
-                    ArrayList urlInfo = new ArrayList();
-                    urlInfo.add(innerURL);
-                    urlInfo.add(absoluteURL);
-                    urlList.add(urlInfo);
-                }
-                tag.setAttribute("href", absoluteURL);
-            }
-        }
-
         return urlList;
-
     }
 
     /**
@@ -297,29 +266,19 @@ public class URL2Mhtml {
      * 输入参数：nodes 网页标签集合; urlMap 已存在的url集合; strWeb 网页地址<br>
      * 返回类型：图像链接集合<br>
      */
-    private ArrayList extractAllImageNodes(NodeList nodes, HashMap urlMap,
-                                           URL strWeb) {
+    private List<List<String>> extractAllImageElements(NodeList nodes, HashMap urlMap,
+                                              URL url, Elements elements) {
 
-        ArrayList urlList = new ArrayList();
-        NodeList filtered = nodes.extractAllNodesThatMatch(new TagNameFilter(
-                "IMG"), true);
-
-        for (int i = 0; i < filtered.size(); i++) {
-            Tag tag = (Tag) filtered.elementAt(i);
-            String src = tag.getAttribute("src");
-            System.out.println("IMG src="+src);
-            // Handle external css file's url
-            if (src != null && src.length() > 0) {
-                String innerURL = src;
-                String absoluteURL = makeAbsoluteURL(strWeb, innerURL);
-                if (absoluteURL != null && !urlMap.containsKey(absoluteURL)) {
-                    urlMap.put(absoluteURL, innerURL);
-                    ArrayList urlInfo = new ArrayList();
-                    urlInfo.add(innerURL);
-                    urlInfo.add(absoluteURL);
-                    urlList.add(urlInfo);
-                }
-                tag.setAttribute("src", absoluteURL);
+        List<List<String>> urlList = new ArrayList();
+        for(Element e : elements) {
+            String src = e.attr("src");
+            String absoluteURL = makeAbsoluteURL(url, src);
+            if(absoluteURL != null && !urlMap.containsKey(absoluteURL)) {
+                urlMap.put(absoluteURL, src);
+                List<String> urlInfo = new ArrayList();
+                urlInfo.add(src);
+                urlInfo.add(absoluteURL);
+                urlList.add(urlInfo);
             }
         }
         return urlList;
@@ -371,8 +330,8 @@ public class URL2Mhtml {
      * strWeb 网页地址； strFilePath 保存路径<br>
      * 返回类型：<br>
      */
-    private void createMhtArchive(String content, ArrayList urlScriptList,
-                                  ArrayList urlImageList, URL strWeb, String strFilePath) throws Exception {
+    private void createMhtArchive(String content, List urlScriptList,
+                                  List urlImageList, URL strWeb, String strFilePath) throws Exception {
 
         // Instantiate a Multipart object
         MimeMultipart mp = new MimeMultipart("related");

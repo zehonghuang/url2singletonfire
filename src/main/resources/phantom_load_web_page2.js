@@ -8,9 +8,6 @@ var url = system.args[1];
 
 var img_path = system.args[2];
 
-var separator = system.os.name.toUpperCase == 'WINDOWS'?'\\':'/';
-
-var resUrl = [];
 // create and set page
 var page = webpage.create();
 
@@ -87,8 +84,4 @@ function onPageReady() {
     return page.evaluate(function () {
         return document.documentElement.innerHTML;
     });
-}
-
-function sleep(time) {
-    for(var start = Date.now(); Date.now() - start <= time; ){}
 }

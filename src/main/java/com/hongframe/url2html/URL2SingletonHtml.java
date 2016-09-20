@@ -2,6 +2,7 @@ package com.hongframe.url2html;
 
 import com.hongframe.PhantomjsUtils;
 import com.hongframe.entity.Image;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -28,7 +29,7 @@ public class URL2SingletonHtml {
     private Map<String, String> map = new HashMap<String, String>();
 
     public static void main(String[] args) throws IOException {
-        new URL2SingletonHtml("http://www.5aitou.com","/Users/huangzehong/Downloads/5aitou.html", "/Users/huangzehong/Downloads/ihurong.png", "UTF-8");
+        new URL2SingletonHtml("http://www.5aitou.com","D:\\5aitou.html", "D:\\ihurong.png", "UTF-8");
     }
 
     /**
@@ -42,21 +43,13 @@ public class URL2SingletonHtml {
     public URL2SingletonHtml(String url, String htmlPath, String imgPath, String encode) throws IOException {
 
         try {
-            byte[] bText = null;
-            // 取得页面内容
-            bText = PhantomjsUtils.toHTML(url, imgPath).getBytes();
-            String html = new String(bText);
+            String html =PhantomjsUtils.toHTML(url, imgPath);
             if(html.contains("charset=")) {
                 strEncoding = html.split("charset=(\")")[1];
                 strEncoding = strEncoding.substring(0, strEncoding.indexOf("\""));
             }
             else {
                 strEncoding = encode;
-            }
-            try {
-                html = new String(bText, 0, bText.length, strEncoding);
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
             }
             System.out.println("into compile");
             compile(new URL(url), html);
@@ -247,21 +240,15 @@ public class URL2SingletonHtml {
         return doc.html();
     }
 
-    private void saveAsFileWriter(String content, String file) {
+    private void saveAsFileWriter(String content, String filePath) {
 
-        FileWriter fwriter = null;
         try {
-            fwriter = new FileWriter(file);
-            fwriter.write(content);
+            File file = new File(filePath);
+            File path = file.getParentFile();
+            FileUtils.forceMkdir(path);
+            FileUtils.writeStringToFile(file, content, "utf-8");
         } catch (IOException ex) {
             ex.printStackTrace();
-        } finally {
-            try {
-                fwriter.flush();
-                fwriter.close();
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
         }
     }
 

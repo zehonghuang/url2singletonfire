@@ -28,8 +28,9 @@ public class PhantomjsUtils {
         BufferedReader br = null;
         StringBuilder sb = new StringBuilder();
         Runtime runtime = Runtime.getRuntime();
+        String encoding = System.getProperty("file.encoding");
 
-        Process process = runtime.exec("phantomjs " + phantomjsPath + url + " " + imgPath);
+        Process process = runtime.exec("phantomjs --output-encoding=" + encoding + " " + phantomjsPath + url + " " + imgPath);
         is = process.getInputStream();
         br = new BufferedReader(new InputStreamReader(is));
 

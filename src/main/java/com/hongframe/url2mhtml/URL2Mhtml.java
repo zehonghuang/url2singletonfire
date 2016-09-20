@@ -50,24 +50,13 @@ public class URL2Mhtml {
     public URL2Mhtml(String url, String htmlPath, String imgPath, String encode) throws IOException {
 
         try {
-            byte[] bText = null;
-            //取得页面内容
-            bText = PhantomjsUtils.toHTML(url, imgPath).getBytes();
-            String html = new String(bText);
+            String html = PhantomjsUtils.toHTML(url, imgPath);
             if(html.contains("charset=")) {
                 strEncoding = html.split("charset=(\")")[1];
                 strEncoding = strEncoding.substring(0, strEncoding.indexOf("\""));
             }
             else {
                 strEncoding = encode;
-            }
-            try {
-                html = new String(bText, 0, bText.length, strEncoding);
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
-            if (html == null){
-                return;
             }
             compile(new URL(url),html,htmlPath);
 
@@ -238,7 +227,6 @@ public class URL2Mhtml {
      */
     public  String makeAbsoluteURL(URL strWeb, String innerURL) {
 
-        // TODO Auto-generated method stub
         // 去除后缀(即参数去掉)
 //        int pos = innerURL.indexOf("?");
 //        if (pos != -1) {
@@ -312,7 +300,6 @@ public class URL2Mhtml {
         if (to != null) {
             InternetAddress[] toAddresses = getInetAddresses(to);
             msg.setRecipients(Message.RecipientType.TO, toAddresses);
-
         }
 
         // cc

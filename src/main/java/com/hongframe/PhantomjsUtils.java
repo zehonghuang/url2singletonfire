@@ -8,7 +8,7 @@ import java.io.*;
 /**
  * Created by huangzehong on 16/9/19.
  */
-public class PhantomjsUtils {
+public  class PhantomjsUtils {
 
     private static String phantomjsPath;
 

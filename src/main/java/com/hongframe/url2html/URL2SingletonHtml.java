@@ -246,7 +246,7 @@ public class URL2SingletonHtml {
             File file = new File(filePath);
             File path = file.getParentFile();
             FileUtils.forceMkdir(path);
-            FileUtils.writeStringToFile(file, content, "utf-8");
+            FileUtils.writeStringToFile(file, content, strEncoding);
         } catch (IOException ex) {
             ex.printStackTrace();
         }

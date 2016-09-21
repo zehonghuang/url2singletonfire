@@ -23,6 +23,13 @@ public  class PhantomjsUtils {
         }
     }
 
+    /**
+     * 用phantomjs获取渲染后的页面内容
+     * @param url 页面地址
+     * @param imgPath 保存截图文件的地址
+     * @return 页面html
+     * @throws IOException
+     */
     public static String toHTML(String url, String imgPath) throws IOException {
 
         InputStream is = null;
@@ -53,7 +60,7 @@ public  class PhantomjsUtils {
 
     /**
      * 自定义phantomjs命令路径
-     * @param path
+     * @param path 命令路径。如：/usr/local/bin/phantomjs
      */
     public static void setPhantomjsPath(String path) {
         customPath = path;
@@ -61,7 +68,7 @@ public  class PhantomjsUtils {
 
     /**
      * 自定义js文件路径
-     * @param path
+     * @param path js文件路径。如 /data/js/xxxxxx.jd
      */
     public static void setJsPath(String path) {
         if(path != null && !path.isEmpty())

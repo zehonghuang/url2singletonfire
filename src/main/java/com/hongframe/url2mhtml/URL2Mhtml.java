@@ -186,9 +186,10 @@ public class URL2Mhtml {
                 src0href = e.attr("href");
             }
             String absoluteURL = makeAbsoluteURL(url, src0href);
+            List<String> urlInfo;
             if(absoluteURL != null && !urlMap.containsKey(absoluteURL)) {
                 urlMap.put(absoluteURL, src0href);
-                List<String> urlInfo = new ArrayList();
+                urlInfo = new ArrayList();
                 urlInfo.add(src0href);
                 urlInfo.add(absoluteURL);
                 urlList.add(urlInfo);

@@ -26,7 +26,7 @@ public class URL2SingletonHtml {
     /** 网页编码 */
     private String strEncoding = null;
 
-    private Map<String, String> map = new HashMap<String, String>();
+    private Map<String, String> map = new HashMap();
 
     public static void main(String[] args) throws IOException {
         new URL2SingletonHtml("http://www.5aitou.com","D:\\5aitou.html", "D:\\ihurong.png", "UTF-8");
@@ -69,7 +69,7 @@ public class URL2SingletonHtml {
         if (url == null || html == null) {
             return false;
         }
-        HashMap<String, String> urlMap = new HashMap<String, String>();
+        HashMap<String, String> urlMap = new HashMap();
 
         Document doc = Jsoup.parse(html);
         Elements scriptElements = doc.select("link[href]");
@@ -95,15 +95,18 @@ public class URL2SingletonHtml {
      * 返回类型：byte[]<br>
      */
     private byte[] downBinaryFile(String urlStr) {
+        URL url;
+        int contentLength;
         try {
-            URL url = new URL(urlStr);
+            url = new URL(urlStr);
             URLConnection conn = url.openConnection();
             conn.setRequestProperty("User-Agent",
                     "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.101 Safari/537.36");
             // String contentType = this.strType;
-            int contentLength = conn.getContentLength();
+            contentLength = conn.getContentLength();
+            InputStream raw;
             if (contentLength > 0) {
-                InputStream raw = conn.getInputStream();
+                raw = conn.getInputStream();
                 InputStream in = new BufferedInputStream(raw);
                 byte[] data = new byte[contentLength];
                 int bytesRead = 0;
@@ -137,26 +140,27 @@ public class URL2SingletonHtml {
     private URL extractBaseURL(Elements elements) {
         if(elements == null)
             return null;
-        String href = null;
+        URL url = null;
         for(Element element : elements) {
-            href = element.attr("href");
+            String href = element.attr("href");
             if (href != null && href.length() > 0) {
                 try {
-                    return new URL(href);
+                    url = new URL(href);
+                    break;
                 } catch (MalformedURLException e) {
                     e.printStackTrace();
 
                 }
             }
         }
-        return null;
+        return url;
     }
 
     /**
      * 方法说明：抽取网页包含的css,js链接
-     * @param urlMap
-     * @param url
-     * @param elements
+     * @param urlMap 相对路径与绝对路径的映射
+     * @param url web页面的url
+     * @param elements js与css的标签元素列表
      */
     private void extractAllScriptElements(HashMap<String, String> urlMap, URL url, Elements elements) {
 
@@ -177,9 +181,9 @@ public class URL2SingletonHtml {
 
     /**
      * 方法说明：抽取网页包含的图像链接<br>
-     * @param urlMap
-     * @param url
-     * @param elements
+     * @param urlMap 相对路径与绝对路径的映射
+     * @param url web页面的url
+     * @param elements img的标签元素列表
      */
     private void extractAllImageElements(HashMap<String, String> urlMap, URL url, Elements elements) {
 
@@ -194,6 +198,12 @@ public class URL2SingletonHtml {
         }
     }
 
+    /**
+     * 把页面html的js、css路径出去，img路径替换为base64
+     * @param html 页面内容
+     * @param linkMap 文件内部链接与文件内容的映射
+     * @return 替换后的页面内容
+     */
     private String replaceHtml(String html, Map<String, String> linkMap) {
         if (StringUtils.isBlank(html))
             return html;
@@ -257,7 +267,7 @@ public class URL2SingletonHtml {
      * 输入参数：strWeb 网页地址; innerURL 相对路径链接<br>
      * 返回类型：绝对路径链接<br>
      */
-    public String makeAbsoluteURL(URL strWeb, String innerURL) {
+    private String makeAbsoluteURL(URL strWeb, String innerURL) {
 
         // TODO Auto-generated method stub
         // 去除后缀(即参数去掉)

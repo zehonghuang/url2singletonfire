@@ -10,15 +10,16 @@ import java.io.*;
  */
 public  class PhantomjsUtils {
 
-    private static String phantomjsPath;
+    private static String jsPath;
+    private static String customPath;
 
     static {
         String path = new File(URL2SingletonHtml.class.getResource("/").getPath()).getPath();
-        phantomjsPath = path +  System.getProperty("file.separator") + "classes" + System.getProperty("file.separator") + "phantom_load_web_page2.js ";
-        File f = new File(phantomjsPath);
+        jsPath = path +  System.getProperty("file.separator") + "classes" + System.getProperty("file.separator") + "phantom_load_web_page2.js ";
+        File f = new File(jsPath);
         if (!f.exists()) {
             path = StringUtils.substringBeforeLast(path, System.getProperty("file.separator"));
-            phantomjsPath = path +  System.getProperty("file.separator") + "classes" + System.getProperty("file.separator") + "phantom_load_web_page2.js ";
+            jsPath = path +  System.getProperty("file.separator") + "classes" + System.getProperty("file.separator") + "phantom_load_web_page2.js ";
         }
     }
 
@@ -30,7 +31,15 @@ public  class PhantomjsUtils {
         Runtime runtime = Runtime.getRuntime();
         String encoding = System.getProperty("file.encoding");
 
-        Process process = runtime.exec("phantomjs --output-encoding=" + encoding + " " + phantomjsPath + url + " " + imgPath);
+        String cmd = null;
+        if(customPath != null && !customPath.isEmpty()) {
+            cmd = customPath + " --output-encoding=" + encoding + " " + jsPath + url + " " + imgPath;
+        }
+        else {
+            cmd = "phantomjs --output-encoding=" + encoding + " " + jsPath + url + " " + imgPath;
+        }
+
+        Process process = runtime.exec(cmd);
         is = process.getInputStream();
         br = new BufferedReader(new InputStreamReader(is));
 
@@ -40,6 +49,23 @@ public  class PhantomjsUtils {
         }
         System.out.println("phantomjs end....");
         return sb.toString();
+    }
+
+    /**
+     * 自定义phantomjs命令路径
+     * @param path
+     */
+    public static void setPhantomjsPath(String path) {
+        customPath = path;
+    }
+
+    /**
+     * 自定义js文件路径
+     * @param path
+     */
+    public static void setJsPath(String path) {
+        if(path != null && !path.isEmpty())
+            jsPath = path;
     }
 
 }
